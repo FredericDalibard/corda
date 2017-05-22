@@ -97,7 +97,6 @@ class RPCPerformanceTests : AbstractRPCTest() {
 
                 val numberOfRequests = overallTraffic / (2 * inputOutputSize)
                 val timings = Collections.synchronizedList(ArrayList<Long>())
-                val executor = Executors.newFixedThreadPool(8)
                 val totalElapsed = Stopwatch.createStarted().apply {
                     startTightLoopInjector(
                             parallelism = 8,
@@ -110,7 +109,6 @@ class RPCPerformanceTests : AbstractRPCTest() {
                         timings.add(elapsed)
                     }
                 }.stop().elapsed(TimeUnit.MICROSECONDS)
-                executor.shutdownNow()
                 SimpleRPCResult(
                         requestPerSecond = 1000000.0 * numberOfRequests.toDouble() / totalElapsed.toDouble(),
                         averageIndividualMs = timings.average() / 1000.0,

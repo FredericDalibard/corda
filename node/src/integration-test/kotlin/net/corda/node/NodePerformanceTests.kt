@@ -29,7 +29,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 
-fun checkQuasarAgent() {
+private fun checkQuasarAgent() {
     if (!(ManagementFactory.getRuntimeMXBean().inputArguments.any { it.contains("quasar") })) {
         throw IllegalStateException("No quasar agent")
     }
@@ -44,7 +44,7 @@ class NodePerformanceTests {
         }
     }
 
-    data class FlowMeasurementResult(
+    private data class FlowMeasurementResult(
             val flowPerSecond: Double,
             val averageMs: Double
     )
