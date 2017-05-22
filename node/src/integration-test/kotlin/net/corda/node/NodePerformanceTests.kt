@@ -27,6 +27,7 @@ import org.junit.Test
 import java.lang.management.ManagementFactory
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.streams.toList
 
 
 private fun checkQuasarAgent() {
