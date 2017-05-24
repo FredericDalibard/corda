@@ -3,16 +3,19 @@ package net.corda.testing.node
 import net.corda.core.contracts.Attachment
 import net.corda.core.crypto.*
 import net.corda.core.flows.StateMachineRunId
-import net.corda.core.identity.Party
+import net.corda.core.identity.PartyAndCertificate
 import net.corda.core.messaging.SingleMessageRecipient
 import net.corda.core.node.NodeInfo
 import net.corda.core.node.ServiceHub
 import net.corda.core.node.services.*
 import net.corda.core.serialization.SingletonSerializeAsToken
 import net.corda.core.transactions.SignedTransaction
+import net.corda.core.utilities.DUMMY_CA
 import net.corda.core.utilities.DUMMY_NOTARY
+import net.corda.core.utilities.getTestPartyAndCertificate
 import net.corda.node.services.identity.InMemoryIdentityService
 import net.corda.node.services.keys.freshKeyAndCert
+import net.corda.node.services.keys.getSigner
 import net.corda.node.services.persistence.InMemoryStateMachineRecordedTransactionMappingStorage
 import net.corda.node.services.schema.HibernateObserver
 import net.corda.node.services.schema.NodeSchemaService
@@ -21,6 +24,8 @@ import net.corda.node.services.vault.NodeVaultService
 import net.corda.testing.MEGA_CORP
 import net.corda.testing.MINI_CORP
 import net.corda.testing.MOCK_VERSION_INFO
+import org.bouncycastle.cert.X509CertificateHolder
+import org.bouncycastle.operator.ContentSigner
 import rx.Observable
 import rx.subjects.PublishSubject
 import java.io.ByteArrayInputStream
@@ -32,7 +37,6 @@ import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.cert.CertPath
-import java.security.cert.X509Certificate
 import java.time.Clock
 import java.util.*
 import java.util.jar.JarInputStream
@@ -60,13 +64,14 @@ open class MockServices(vararg val keys: KeyPair) : ServiceHub {
     }
 
     override val storageService: TxWritableStorageService = MockStorageService()
-    override final val identityService: IdentityService = InMemoryIdentityService(listOf(MEGA_CORP, MINI_CORP, DUMMY_NOTARY))
+    override final val identityService: IdentityService = InMemoryIdentityService(listOf(MEGA_CORP, MINI_CORP, DUMMY_NOTARY),
+            networkRoot = DUMMY_CA)
     override val keyManagementService: KeyManagementService = MockKeyManagementService(identityService, *keys)
 
     override val vaultService: VaultService get() = throw UnsupportedOperationException()
     override val networkMapCache: NetworkMapCache get() = throw UnsupportedOperationException()
     override val clock: Clock get() = Clock.systemUTC()
-    override val myInfo: NodeInfo get() = NodeInfo(object : SingleMessageRecipient {}, Party(MEGA_CORP.name, key.public), MOCK_VERSION_INFO.platformVersion)
+    override val myInfo: NodeInfo get() = NodeInfo(object : SingleMessageRecipient {}, getTestPartyAndCertificate(MEGA_CORP.name, key.public), MOCK_VERSION_INFO.platformVersion)
     override val transactionVerifierService: TransactionVerifierService get() = InMemoryTransactionVerifierService(2)
 
     fun makeVaultService(dataSourceProps: Properties): VaultService {
@@ -91,7 +96,9 @@ class MockKeyManagementService(val identityService: IdentityService,
         return k.public
     }
 
-    override fun freshKeyAndCert(identity: Party, revocationEnabled: Boolean): Pair<X509Certificate, CertPath> = freshKeyAndCert(this, identityService, identity, revocationEnabled)
+    override fun freshKeyAndCert(identity: PartyAndCertificate, revocationEnabled: Boolean): Pair<X509CertificateHolder, CertPath> = freshKeyAndCert(this, identityService, identity, revocationEnabled)
+
+    override fun getSigner(publicKey: PublicKey): ContentSigner = getSigner(getSigningKeyPair(publicKey))
 
     private fun getSigningKeyPair(publicKey: PublicKey): KeyPair {
         val pk = publicKey.keys.first { keyStore.containsKey(it) }

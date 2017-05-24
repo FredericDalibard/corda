@@ -9,12 +9,14 @@ import net.corda.core.*
 import net.corda.core.crypto.entropyToKeyPair
 import net.corda.core.flows.FlowLogic
 import net.corda.core.identity.Party
+import net.corda.core.identity.PartyAndCertificate
 import net.corda.core.messaging.RPCOps
 import net.corda.core.messaging.SingleMessageRecipient
 import net.corda.core.node.CordaPluginRegistry
 import net.corda.core.node.PhysicalLocation
 import net.corda.core.node.ServiceEntry
 import net.corda.core.node.services.*
+import net.corda.core.utilities.DUMMY_CA
 import net.corda.core.utilities.DUMMY_NOTARY_KEY
 import net.corda.core.utilities.loggerFor
 import net.corda.node.internal.AbstractNode
@@ -167,7 +169,8 @@ class MockNetwork(private val networkSendManuallyPumped: Boolean = false,
                     .getOrThrow()
         }
 
-        override fun makeIdentityService() = InMemoryIdentityService(mockNet.identities)
+        // TODO: Specify a CA to validate registration against
+        override fun makeIdentityService() = InMemoryIdentityService(mockNet.identities, networkRoot = null)
 
         override fun makeVaultService(dataSourceProperties: Properties): VaultService = NodeVaultService(services, dataSourceProperties)
 
@@ -235,7 +238,7 @@ class MockNetwork(private val networkSendManuallyPumped: Boolean = false,
         @VisibleForTesting
         fun registerServiceFlow(clientFlowClass: KClass<out FlowLogic<*>>,
                                 flowVersion: Int = clientFlowClass.java.flowVersion,
-                                serviceFlowFactory: (Party) -> FlowLogic<*>) {
+                                serviceFlowFactory: (PartyAndCertificate) -> FlowLogic<*>) {
             serviceFlowFactories[clientFlowClass.java] = ServiceFlowInfo.CorDapp(flowVersion, serviceFlowFactory)
         }
 

@@ -19,6 +19,7 @@ import net.corda.core.map
 import net.corda.core.node.services.linearHeadsOfType
 import net.corda.core.success
 import net.corda.core.transactions.SignedTransaction
+import net.corda.core.utilities.DUMMY_CA
 import net.corda.flows.TwoPartyDealFlow.Acceptor
 import net.corda.flows.TwoPartyDealFlow.AutoOffer
 import net.corda.flows.TwoPartyDealFlow.Instigator
@@ -47,7 +48,7 @@ class IRSSimulation(networkSendManuallyPumped: Boolean, runAsync: Boolean, laten
 
     override fun startMainSimulation(): ListenableFuture<Unit> {
         val future = SettableFuture.create<Unit>()
-        om = JacksonSupport.createInMemoryMapper(InMemoryIdentityService((banks + regulators + networkMap).map { it.info.legalIdentity }))
+        om = JacksonSupport.createInMemoryMapper(InMemoryIdentityService((banks + regulators + networkMap).map { it.info.legalIdentity }, networkRoot = DUMMY_CA))
 
         startIRSDealBetween(0, 1).success {
             // Next iteration is a pause.

@@ -9,6 +9,7 @@ import net.corda.core.contracts.StateRef
 import net.corda.core.crypto.*
 import net.corda.core.flows.FlowLogic
 import net.corda.core.identity.Party
+import net.corda.core.identity.PartyAndCertificate
 import net.corda.core.node.ServiceHub
 import net.corda.core.node.VersionInfo
 import net.corda.core.node.services.IdentityService
@@ -85,7 +86,7 @@ val BIG_CORP_PARTY_REF = BIG_CORP.ref(OpaqueBytes.of(1)).reference
 
 val ALL_TEST_KEYS: List<KeyPair> get() = listOf(MEGA_CORP_KEY, MINI_CORP_KEY, ALICE_KEY, BOB_KEY, DUMMY_NOTARY_KEY)
 
-val MOCK_IDENTITY_SERVICE: IdentityService get() = InMemoryIdentityService(listOf(MEGA_CORP, MINI_CORP, DUMMY_NOTARY))
+val MOCK_IDENTITY_SERVICE: IdentityService get() = InMemoryIdentityService(listOf(MEGA_CORP, MINI_CORP, DUMMY_NOTARY), emptyMap(), DUMMY_CA)
 
 val MOCK_VERSION_INFO = VersionInfo(1, "Mock release", "Mock revision", "Mock Vendor")
 

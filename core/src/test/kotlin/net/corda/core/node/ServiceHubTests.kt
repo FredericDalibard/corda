@@ -1,10 +1,14 @@
 package net.corda.core.node
 
+import net.corda.core.contracts.ContractState
 import net.corda.core.contracts.DummyContract
 import net.corda.core.identity.Party
+import net.corda.core.serialization.deserialize
+import net.corda.core.serialization.serialize
 import net.corda.testing.node.MockNetwork
 import org.junit.Before
 import org.junit.Test
+import kotlin.test.assertEquals
 
 /**
  * Tests for functions in the standard service hub.
@@ -26,8 +30,13 @@ class ServiceHubTests {
 
     @Test
     fun `sign initial transaction`() {
-        val onePartyDummyContract = DummyContract.generateInitial(1337, notary, a.services.myInfo.legalIdentity.ref(1))
-        val ptx = a.services.signInitialTransaction(onePartyDummyContract)
-        ptx.verifySignatures()
+        val ptx = DummyContract.generateInitial(1337, notary, a.services.myInfo.legalIdentity.ref(1))
+        val wtx = ptx.toWireTransaction()
+        val actual = wtx.serialized.deserialize()
+        assertEquals(wtx, actual)
+        assertEquals(wtx.merkleTree, actual.merkleTree)
+        assertEquals(wtx.id, actual.id)
+        val stx = a.services.signInitialTransaction(ptx)
+        stx.verifySignatures()
     }
 }
